@@ -1,0 +1,11 @@
+[Unit]
+Description=My Webapp Java REST Service
+
+[Service]
+User=root
+WorkingDirectory=/home/ubuntu/spring-petclinic
+ExecStart=/home/ubuntu/spring-petclinic/start_app.sh
+
+[Install]
+WantedBy=multi-user.target
+
