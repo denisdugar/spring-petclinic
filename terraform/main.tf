@@ -104,6 +104,14 @@ resource "aws_db_subnet_group" "db_sub_group" {
   subnet_ids = [aws_subnet.pr_subnet_a.id, aws_subnet.pr_subnet_b.id]
 }
 
+data "aws_secretsmanager_secret_version" "creds" {
+  secret_id = "db-cred"
+}
+
+locals {
+  db_creds = jsondecode(data.aws_secretsmanager_secret_version.creds.secret_string)
+}
+
 resource "aws_db_instance" "petclinic-db" {
   allocated_storage          = 10
   db_subnet_group_name       = aws_db_subnet_group.db_sub_group.id
@@ -112,11 +120,11 @@ resource "aws_db_instance" "petclinic-db" {
   identifier                 = "pet-db"
   instance_class             = "db.t3.micro"
   vpc_security_group_ids     = [aws_security_group.sg_rds.id]
-  password                   = "petclinic"
+  password                   = local.db_creds.password
   skip_final_snapshot        = true
   storage_encrypted          = true
-  username                   = "petclinic"
-  name                       = "petclinic"
+  username                   = local.db_creds.username
+  name                       = local.db_creds.name
   port                       = 3306
 }
 
