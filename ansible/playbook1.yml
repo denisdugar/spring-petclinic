@@ -1,0 +1,27 @@
+---
+- name: Configurate web
+  hosts: all
+  become: yes
+
+
+  tasks:
+  - name: Update
+    shell: sudo apt update
+
+  - name: Clonning app
+    shell: git clone https://github.com/denisdugar/spring-petclinic.git
+
+  - name: Setup Maven
+    shell: sudo apt install -y maven
+
+  - name: Change database dns
+    shell: sudo sed -i "s/localhost/$MY_MYSQL_URL/g" /home/ubuntu/spring-petclinic/src/main/resources/application-mysql.properties
+
+  - name: Set service
+    shell: sudo mv /home/ubuntu/spring-petclinic/build_app.service /etc/systemd/system 
+ 
+  - name: Update service
+    shell: sudo systemctl daemon-reload
+
+  - name: Start service   
+    shell: sudo systemctl start build_app.service

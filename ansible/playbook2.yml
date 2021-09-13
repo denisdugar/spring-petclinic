@@ -1,0 +1,15 @@
+---
+- name: Update app
+  hosts: all
+  become: yes
+
+
+  tasks:
+  - name: Stop service
+    shell: sudo systemctl stop build_app.service 
+
+  - name: Update repo
+    shell: git -C /home/ubuntu/spring-petclinic pull
+
+  - name: Start service
+    shell: sudo systemctl start build_app.service
