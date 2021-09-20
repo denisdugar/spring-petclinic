@@ -43,9 +43,9 @@ resource "aws_lb_target_group" "target_group" {
     interval            = "300"
     protocol            = "HTTP"
     matcher             = "200"
-    timeout             = "3"
+    timeout             = "120"
     path                = "/v1/status"
-    unhealthy_threshold = "2"
+    unhealthy_threshold = "10"
   }
 }
 
@@ -101,6 +101,47 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
   }
 }
 
+resource "aws_db_subnet_group" "db_sub_group" {
+  name       = "db_group"
+  subnet_ids = [aws_subnet.pr_subnet_a.id, aws_subnet.pr_subnet_b.id]
+}
+
+data "aws_secretsmanager_secret_version" "creds" {
+  secret_id = "db-cred"
+}
+
+locals {
+  db_creds = jsondecode(data.aws_secretsmanager_secret_version.creds.secret_string)
+}
+
+resource "aws_db_instance" "petclinic-db" {
+  allocated_storage          = 10
+  db_subnet_group_name       = aws_db_subnet_group.db_sub_group.id
+  engine                     = "mysql"
+  engine_version             = "5.7"
+  identifier                 = "pet-db"
+  instance_class             = "db.t3.micro"
+  vpc_security_group_ids     = [aws_security_group.sg_rds.id]
+  password                   = local.db_creds.password
+  skip_final_snapshot        = true
+  storage_encrypted          = true
+  username                   = local.db_creds.username
+  name                       = local.db_creds.name
+  port                       = 3306
+}
+
+resource "aws_security_group" "sg_rds" {
+  vpc_id        = aws_vpc.vpc.id
+}
+
+resource "aws_security_group_rule" "rds_sg_in" {
+  security_group_id        = aws_security_group.sg_rds.id
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  cidr_blocks              = ["0.0.0.0/0"]
+}
 
 resource "aws_ecr_repository" "aws-ecr" {
   name = "ecr"
@@ -145,6 +186,12 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
       "name": "container",
       "image": "966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest",
       "entryPoint": [],
+      "environment": [
+        {
+      "name": "MY_MYSQL_URL",
+      "value": "${aws_db_instance.petclinic-db.address}"
+        }
+      ],
       "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -160,16 +207,16 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
           "hostPort": 8080
         }
       ],
-      "cpu": 256,
-      "memory": 512,
+      "cpu": 2048,
+      "memory": 4096,
       "networkMode": "awsvpc"
     }
   ]
   DEFINITION
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  memory                   = "512"
-  cpu                      = "256"
+  memory                   = "8192"
+  cpu                      = "4096"
   execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
   task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
 }
