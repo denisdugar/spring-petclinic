@@ -26,23 +26,50 @@ data "aws_db_instance" "database" {
   db_instance_identifier = "pet-db"
 }
 
-resource "aws_instance" "web" {
+resource "aws_default_vpc" "default" {
+  tags = {
+    Name = "Default VPC"
+  }
+}
+
+
+resource "aws_security_group" "build" {
+  vpc_id = aws_default_vpc.default.id
+  dynamic "ingress" {
+    for_each = ["8080", "80", "22"]
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+resource "aws_instance" "build" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.medium"
-
+  vpc_security_group_ids = [aws_security_group.build.id]
   user_data = <<-EOF
   #!/bin/bash
   sudo apt update
   sudo apt install awscli -y
   sudo apt install maven -y
-  sudo apt install docker -y 
+  sudo apt install docker.io -y 
   aws configure set aws_access_key_id ${local.aws_creds.access_key}
   aws configure set aws_secret_access_key ${local.aws_creds.secret_key}
   aws configure set default.region eu-central-1
   git clone https://github.com/denisdugar/spring-petclinic.git
-  sed -i "s/localhost/${data.aws_db_instance.database.address}/g" spring-petclinic/src/main/resources/application-mysql.properties
-  (cd spring-petclinic && ./mvnw package -Dspring-boot.run.profiles=mysql)
-  sudo docker build -t my_project spring-petclinic/
+  sed -i "s/localhost/${data.aws_db_instance.database.address}/g" /spring-petclinic/src/main/resources/application-mysql.properties
+  (cd /spring-petclinic && ./mvnw package -Dspring-boot.run.profiles=mysql)
+  sudo docker build -t my_project /spring-petclinic
   aws ecr get-login-password --region eu-central-1 | sudo docker login --username AWS --password-stdin 966425126302.dkr.ecr.eu-central-1.amazonaws.com
   docker tag my_project:latest 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest
   docker push 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest
