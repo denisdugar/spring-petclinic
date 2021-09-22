@@ -13,6 +13,7 @@ pipeline {
                 terraform apply -auto-approve; \
                 sleep 25m; \
                 terraform destroy -auto-approve"
+               }
             }
         }
     }
