@@ -1,13 +1,15 @@
 pipeline {
     agent any
-    tools { 
-        maven 'maven'
-        /*jdk 'java' */
-    }
     stages {
         stage ('Build') {
             steps {
-                sh 'mvn package'
+                sh 'git clone https://github.com/denisdugar/spring-petclinic.git'
+                sh 'cd jenkins_terraform'
+                sh 'terraform init'
+                sh 'terraform plan'
+                sh 'terraform apply -auto-approve'
+                sh 'sleep 25m'
+                sh 'terraform destroy -auto-approve'
             }
         }
     }
