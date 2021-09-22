@@ -7,7 +7,8 @@ pipeline {
         stage ('Build') {
             steps {
                 sh 'cd jenkins_terraform'
-                sh 'terraform init'
+                sh 'pwd'
+                sh 'terraform init -chdir=jenkins_terraform'
                 sh 'terraform plan'
                 sh 'terraform apply -auto-approve'
                 sh 'sleep 25m'
