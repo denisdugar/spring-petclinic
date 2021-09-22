@@ -9,6 +9,7 @@ resource "aws_alb" "application_load_balancer" {
   load_balancer_type = "application"
   subnets            = [aws_subnet.pub_subnet_a.id, aws_subnet.pub_subnet_b.id]
   security_groups    = [aws_security_group.load_balancer_security_group.id]
+  depends_on         = [aws_vpc.vpc]
 }
 
 resource "aws_security_group" "load_balancer_security_group" {
@@ -128,6 +129,7 @@ resource "aws_db_instance" "petclinic-db" {
   username                   = local.db_creds.username
   name                       = local.db_creds.name
   port                       = 3306
+  depends_on                 = [aws_vpc.vpc]
 }
 
 resource "aws_security_group" "sg_rds" {
@@ -219,6 +221,7 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
   cpu                      = "4096"
   execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
   task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
+  depends_on               = [aws_vpc.vpc]
 }
 
 data "aws_ecs_task_definition" "main" {
