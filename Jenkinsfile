@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage ('Build') {
             steps {
-                sh 'cd jenkins_terraform'
+                sh 'ls'
                 sh 'pwd'
                 sh 'terraform init -chdir=jenkins_terraform'
                 sh 'terraform plan'
