@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage ('Build') {
             steps {
-                withCredentials([AWS Credentials(credentialsId: 'aws_creds')]) {
+                withAWS(credentials: 'aws_creds'){
                 sh "cd jenkins_terraform; \
                 terraform init; \
                 terraform plan; \
