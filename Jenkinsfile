@@ -3,7 +3,6 @@ pipeline {
     stages {
         stage ('Build') {
             steps {
-                sh 'git clone https://github.com/denisdugar/spring-petclinic.git'
                 sh 'cd jenkins_terraform'
                 sh 'terraform init'
                 sh 'terraform plan'
