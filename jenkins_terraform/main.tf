@@ -55,7 +55,7 @@ resource "aws_security_group" "build" {
 
 resource "aws_instance" "build" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.medium"
+  instance_type = "t2.xlarge"
   vpc_security_group_ids = [aws_security_group.build.id]
   user_data = <<-EOF
   #!/bin/bash
@@ -67,7 +67,8 @@ resource "aws_instance" "build" {
   aws configure set aws_secret_access_key ${local.aws_creds.secret_key}
   aws configure set default.region eu-central-1
   git clone https://github.com/denisdugar/spring-petclinic.git
-  sed -i "s/localhost/${data.aws_db_instance.database.address}/g" /spring-petclinic/src/main/resources/application-mysql.properties
+  sudo echo "MY_MYSQL_URL=${data.aws_db_instance.database.address}" >> /etc/environment
+  sed -i "s/localhost/$MY_MYSQL_URL/g" /spring-petclinic/src/main/resources/application-mysql.properties
   (cd /spring-petclinic && ./mvnw package -Dspring-boot.run.profiles=mysql)
   sudo docker build -t my_project /spring-petclinic
   aws ecr get-login-password --region eu-central-1 | sudo docker login --username AWS --password-stdin 966425126302.dkr.ecr.eu-central-1.amazonaws.com

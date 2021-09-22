@@ -10,3 +10,7 @@ target/*
 .sts4-cache/
 .vscode
 _site/
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
