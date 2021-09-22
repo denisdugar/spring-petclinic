@@ -6,15 +6,12 @@ pipeline {
     stages {
         stage ('Build') {
             steps {
-                sh 'ls'
-                sh 'pwd'
-                sh 'cd jenkins_terraform'
-                sh 'ls'
-                sh 'terraform init -chdir=jenkins_terraform'
-                sh 'terraform plan'
-                sh 'terraform apply -auto-approve'
-                sh 'sleep 25m'
-                sh 'terraform destroy -auto-approve'
+                sh "cd jenkins_terraform \
+                terraform init \
+                terraform plan \
+                terraform apply -auto-approve \
+                sleep 25m \
+                terraform destroy -auto-approve"
             }
         }
     }
