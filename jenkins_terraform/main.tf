@@ -57,7 +57,6 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu" {
      comparison_operator       = "GreaterThanOrEqualToThreshold"
      evaluation_periods        = "2"
      metric_name               = "CPUUtilization"
-#     namespace                 = "AWS/EC2"
      period                    = "10"
      statistic                 = "Average"
      threshold                 = "80"
