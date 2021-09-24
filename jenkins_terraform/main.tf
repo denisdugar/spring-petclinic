@@ -75,6 +75,6 @@ resource "aws_instance" "build" {
   docker tag my_project:latest 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest
   docker push 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest
   sleep 1m
-  aws ecs update-service --cluster cluster --service ecs-service --force-new-deployment
+  aws ecs stop-task --cluster cluster --task $(aws ecs list-tasks --cluster cluster --service ecs-service --output text --query taskArns[0])
   EOF
 }
