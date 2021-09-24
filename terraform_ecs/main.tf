@@ -48,6 +48,7 @@ resource "aws_lb_target_group" "target_group" {
     path                = "/v1/status"
     unhealthy_threshold = "10"
   }
+  depends_on            = [aws_vpc.vpc]
 }
 
 resource "aws_lb_listener" "listener" {
@@ -59,6 +60,7 @@ resource "aws_lb_listener" "listener" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.target_group.id
   }
+  depends_on         = [aws_vpc.vpc]
 }
 
 
@@ -68,6 +70,7 @@ resource "aws_appautoscaling_target" "ecs_target" {
   resource_id        = "service/${aws_ecs_cluster.aws-ecs-cluster.name}/${aws_ecs_service.aws-ecs-service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
+  depends_on         = [aws_vpc.vpc]
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_memory" {
@@ -84,6 +87,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_memory" {
 
     target_value = 80
   }
+  depends_on         = [aws_vpc.vpc]
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
@@ -100,6 +104,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
 
     target_value = 80
   }
+  depends_on         = [aws_vpc.vpc]
 }
 
 resource "aws_db_subnet_group" "db_sub_group" {
@@ -145,10 +150,6 @@ resource "aws_security_group_rule" "rds_sg_in" {
   cidr_blocks              = ["0.0.0.0/0"]
 }
 
-resource "aws_ecr_repository" "aws-ecr" {
-  name = "ecr"
-}
-
 resource "aws_iam_role" "ecsTaskExecutionRole" {
   name               = "execution-task-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
@@ -171,7 +172,8 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
 }
 
 resource "aws_ecs_cluster" "aws-ecs-cluster" {
-  name = "cluster"
+  name        = "cluster"
+  depends_on  = [aws_vpc.vpc]
 }
 
 resource "aws_cloudwatch_log_group" "log-group" {
@@ -226,6 +228,7 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
 
 data "aws_ecs_task_definition" "main" {
   task_definition = aws_ecs_task_definition.aws-ecs-task.family
+  depends_on      = [aws_vpc.vpc]
 }
 
 resource "aws_ecs_service" "aws-ecs-service" {
