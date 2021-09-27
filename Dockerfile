@@ -1,3 +1,3 @@
 FROM maven
-COPY . .
-CMD ./mvnw package
+ADD . .
+CMD mvn spring-boot:run -Dspring-boot.run.profiles=mysql
