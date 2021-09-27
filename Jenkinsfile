@@ -1,5 +1,8 @@
 pipeline{
   agent any
+  tool{
+    maven "maven"
+  }
   stages{
     stage("Get db address") {
       steps{
@@ -11,9 +14,7 @@ pipeline{
     }
     stage("Build app"){
       steps{
-       withMaven {
          sh "./mvnw package"
-        }
       }
     }
   }
