@@ -1,6 +1,6 @@
+@Library('github.com/releaseworks/jenkinslib') _
 pipeline {
     agent any
-    @Library('github.com/releaseworks/jenkinslib') _
 
   node {
     stage("List S3 buckets") {
