@@ -1,10 +1,12 @@
 pipeline {
     agent any
-    stages {
-        stage ('Build') {
-            steps {
-                sh 'docker build -t my_project .'
-            }
-        }
+    @Library('github.com/releaseworks/jenkinslib') _
+
+  node {
+    stage("List S3 buckets") {
+      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+          AWS("--region=eu-central-1 s3 ls")
+      }
     }
+  }
 }
