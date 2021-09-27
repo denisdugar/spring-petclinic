@@ -1,4 +1,3 @@
-FROM ubuntu
+FROM maven
 ADD . .
-RUN apt install maven
-CMD mvn spring-boot:run -Dspring-boot.run.profiles=mysql
+CMD mvn spring-boot:start -Dspring-boot.run.profiles=mysql
