@@ -1,2 +1,3 @@
-FROM amazon/aws-cli
-CMD help
+FROM maven
+COPY . .
+CMD ./mvnw package
