@@ -1,3 +1,3 @@
 FROM maven
-ADD . .
-CMD ./mvnw package
+COPY target/*.jar .
+CMD java -jar -Dspring.profiles.active=mysql *.jar
