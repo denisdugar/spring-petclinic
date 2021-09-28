@@ -19,5 +19,27 @@ pipeline{
          sh "./mvnw package"
       }
     }
+    stage("Build Dockerfile"){
+      steps{
+         sh "docker build -t my_project ."
+      }
+    }
+    stage("Tag and push image") {
+      steps{
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            sh """docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecr get-login-password --region eu-cen>
+            docker tag my_project:latest 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest; \
+            docker push 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest; \
+            sleep 1m"""
+        }
+      }
+    }
+  stage("Update ECS task") {
+      steps{
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            sh "docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs stop-task --cluster cluster --task \>
+        }
+      }
+    }
   }
 }
