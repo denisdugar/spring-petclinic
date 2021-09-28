@@ -37,8 +37,8 @@ pipeline{
   stage("Update ECS task") {
       steps{
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            sh """export TASK_ECS=\$(docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs list-tasks --cluster cluster --service ecs-service --output text --query taskArns[0]); \
-                  docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs stop-task --cluster cluster --task \$TASK_ECS"""
+            sh """export TASK_ECS=\$(docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs list-tasks --region eu-central-1 --cluster cluster --service ecs-service --output text --query taskArns[0]); \
+                  docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs stop-task --region eu-central-1 --cluster cluster --task \$TASK_ECS"""
         }
       }
     }
