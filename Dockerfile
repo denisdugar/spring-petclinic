@@ -1,3 +1,3 @@
 FROM maven
-COPY target/*.jar .
+COPY *.jar .
 CMD java -jar -Dspring.profiles.active=mysql *.jar

@@ -19,27 +19,9 @@ pipeline{
          sh "./mvnw package"
       }
     }
-    stage("Build Dockerfile"){
+    stage("Upload jar to s3"){
       steps{
-         sh "docker build -t my_project ."
-      }
-    }
-    stage("Tag and push image") {
-      steps{
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            sh """docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 966425126302.dkr.ecr.eu-central-1.amazonaws.com; \
-            docker tag my_project:latest 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest; \
-            docker push 966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest; \
-            sleep 1m"""
-        }
-      }
-    }
-  stage("Update ECS task") {
-      steps{
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            sh """export TASK_ECS=\$(docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs list-tasks --region eu-central-1 --cluster cluster --service ecs-service --output text --query taskArns[0]); \
-                  docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli ecs stop-task --region eu-central-1 --cluster cluster --task \$TASK_ECS"""
-        }
+         sh "docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli s3 mv target/*.jar s3:/petclinicjar"
       }
     }
   }

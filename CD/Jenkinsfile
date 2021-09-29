@@ -1,6 +1,16 @@
 pipeline{
   agent any
   stages{
+    stage("Download jar from s3"){
+      steps{
+         sh "docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli s3 mv s3://petclinicjar/spring-petclinic-2.4.5.jar ."
+      }
+    }
+    stage("Build Dockerfile"){
+      steps{
+         sh "docker build -t my_project ."
+      }
+    }
     stage("Tag and push image") {
       steps{
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
