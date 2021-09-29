@@ -6,7 +6,7 @@ pipeline{
          sh "/var/jenkins_home/sprin-petclinic-2.4.5.jar ."
       }
     }
-    stage{
+    stage("build image"){
       steps{
         sh "docker build -t my_project ."
       }
