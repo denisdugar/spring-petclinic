@@ -21,7 +21,7 @@ pipeline{
     }
     stage("save jar"){
      steps{
-       sh "cp target/spring-petclinic-2.4.5.jar /var/jenkis_home"
+       sh "cp target/spring-petclinic-2.4.5.jar /var/jenkins_home"
       }
     }
   }
