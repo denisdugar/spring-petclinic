@@ -1,9 +1,9 @@
 pipeline{
   agent any
   stages{
-    stage("Download jar from s3"){
+    stage("Get jar file"){
       steps{
-         sh "docker run -v \$(pwd):/app --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli s3 mv s3://petclinicjar1/sprin-petclinic-2.4.5.jar ."
+         sh "/var/jenkins_home/sprin-petclinic-2.4.5.jar ."
       }
     }
     stage{
