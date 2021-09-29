@@ -3,7 +3,7 @@ pipeline{
   stages{
     stage("Get jar file"){
       steps{
-         sh "/var/jenkins_home/sprin-petclinic-2.4.5.jar ."
+         sh "cp /var/jenkins_home/sprin-petclinic-2.4.5.jar ."
       }
     }
     stage("build image"){
