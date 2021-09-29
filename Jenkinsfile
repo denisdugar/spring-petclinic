@@ -22,7 +22,7 @@ pipeline{
     stage("upload to s3"){
      steps{
        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-         sh "docker run -v \$(pwd):/app --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli s3 mv /app/target/spring-petclinic-2.4.5.jar s3://petclinicjar1"
+         sh "cd target; docker run -v \$(pwd):/app --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli s3 mv /app/spring-petclinic-2.4.5.jar s3://petclinicjar1"
         }
       }
     }
