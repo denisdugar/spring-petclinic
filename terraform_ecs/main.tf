@@ -188,7 +188,7 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
   [
     {
       "name": "container",
-      "image": "966425126302.dkr.ecr.eu-central-1.amazonaws.com/my_project:latest",
+      "image": "140625812000.dkr.ecr.eu-west-1.amazonaws.com/my_project:latest",
       "entryPoint": [],
       "environment": [
         {
