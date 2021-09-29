@@ -211,16 +211,16 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
           "hostPort": 8080
         }
       ],
-      "cpu": 2048,
-      "memory": 4096,
+      "cpu": 1024,
+      "memory": 2048,
       "networkMode": "awsvpc"
     }
   ]
   DEFINITION
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  memory                   = "8192"
-  cpu                      = "4096"
+  memory                   = "4096"
+  cpu                      = "2048"
   execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
   task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
   depends_on               = [aws_vpc.vpc]
