@@ -7,8 +7,7 @@ pipeline{
     stage("Get db address") {
       steps{
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'aws-key', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            sh "echo \$(docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli rds describe-db-instances --region eu-west-1 --query DBInstances[*].Endpoint.Address) > text.txt"
-            sh "pwd"
+            sh "echo \$(docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli rds describe-db-instances --region eu-west-1 --db-instance-identifier pet-db  --query DBInstances[*].Endpoint.Address) > text.txt"
             sh """export  MY_MYSQL_URL=\$(cut -d '"' -f 2 text.txt);  \
                   sed -i "s/localhost/\$MY_MYSQL_URL/g" /var/jenkins_home/workspace/Build/src/main/resources/application-mysql.properties"""
         }

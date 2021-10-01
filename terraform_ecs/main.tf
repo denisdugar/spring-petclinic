@@ -3,6 +3,17 @@ provider "aws" {
 }
 data "aws_availability_zones" "available" {}
 
+terraform {
+  backend "s3" {
+    bucket         = "terraform-state-denisdugar141098"
+    key            = "global/s3/terraform.tfstate"
+    region         = "eu-west-1"
+    dynamodb_table = "terraform-up-and-running-locks"
+    encrypt        = true
+  }
+}
+
+
 resource "aws_alb" "application_load_balancer" {
   name               = "alb"
   internal           = false
