@@ -1,0 +1,56 @@
+[
+    {
+        "essential": true,
+        "image": "amazon/aws-for-fluent-bit:latest",
+        "name": "log_router",
+        "firelensConfiguration": {
+          "type": "fluentbit",
+          "options": {
+            "config-file-type": "file",
+            "config-file-value": "/fluent-bit/configs/parse-json.conf",
+            "enable-ecs-log-metadata": "true"
+          }
+        },
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+              "awslogs-group": "${cloudw}",
+              "awslogs-region": "eu-west-1",
+              "awslogs-stream-prefix": "web-logs"
+            }
+          }
+      },
+      {
+                  "name": "container",
+                  "image": "140625812000.dkr.ecr.eu-west-1.amazonaws.com/my_project:latest",
+                  "entryPoint": [],
+                  "environment": [
+                    {
+                  "name": "MY_MYSQL_URL",
+                  "value": "${db_url}"
+                    }
+                  ],
+                  "logConfiguration": {
+                    "logDriver": "awsfirelens",
+                    "options": {
+                      "Name": "datadog",
+                      "apikey": "${api_key}",
+                      "dd_service": "firelens-test",
+                      "dd_source": "redis",
+                      "dd_tags": "project:fluentbit",
+                      "provider": "ecs",
+                      "Host": "http-intake.logs.datadoghq.eu"
+                    }
+                  },
+                  "essential": true,
+                  "portMappings": [
+                    {
+                      "containerPort": 8080,
+                      "hostPort": 8080
+                    }
+                  ],
+                  "cpu": 1024,
+                  "memory": 2048,
+                  "networkMode": "awsvpc"
+      }
+    ]

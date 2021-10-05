@@ -123,12 +123,17 @@ resource "aws_db_subnet_group" "db_sub_group" {
   subnet_ids = [aws_subnet.pr_subnet_a.id, aws_subnet.pr_subnet_b.id]
 }
 
-data "aws_secretsmanager_secret_version" "creds" {
+data "aws_secretsmanager_secret_version" "db-creds" {
   secret_id = "db-cred"
 }
 
+data "aws_secretsmanager_secret_version" "dd-creds" {
+  secret_id = "datadog-cred"
+}
+
 locals {
-  db_creds = jsondecode(data.aws_secretsmanager_secret_version.creds.secret_string)
+  db_creds = jsondecode(data.aws_secretsmanager_secret_version.db-creds.secret_string)
+  datadog_creds = jsondecode(data.aws_secretsmanager_secret_version.dd-creds.secret_string)
 }
 
 resource "aws_db_instance" "petclinic-db" {
@@ -191,43 +196,19 @@ resource "aws_cloudwatch_log_group" "log-group" {
   name = "logs"
 }
 
+data "template_file" "user_data" {
+  template = "${file("definition.json")}"
+  vars = {
+    db_url = "${aws_db_instance.petclinic-db.address}"
+    cloudw = "${aws_cloudwatch_log_group.log-group.id}"
+    api_key = "${local.datadog_creds.api_key}"
+  }
+}
 
 resource "aws_ecs_task_definition" "aws-ecs-task" {
   family = "task"
 
-  container_definitions = <<DEFINITION
-  [
-    {
-      "name": "container",
-      "image": "140625812000.dkr.ecr.eu-west-1.amazonaws.com/my_project:latest",
-      "entryPoint": [],
-      "environment": [
-        {
-      "name": "MY_MYSQL_URL",
-      "value": "${aws_db_instance.petclinic-db.address}"
-        }
-      ],
-      "essential": true,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "${aws_cloudwatch_log_group.log-group.id}",
-          "awslogs-region": "eu-west-1",
-          "awslogs-stream-prefix": "web-logs"
-        }
-      },
-      "portMappings": [
-        {
-          "containerPort": 8080,
-          "hostPort": 8080
-        }
-      ],
-      "cpu": 1024,
-      "memory": 2048,
-      "networkMode": "awsvpc"
-    }
-  ]
-  DEFINITION
+  container_definitions = data.template_file.user_data.rendered
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   memory                   = "4096"
@@ -250,10 +231,9 @@ resource "aws_ecs_service" "aws-ecs-service" {
   scheduling_strategy  = "REPLICA"
   desired_count        = 1
   force_new_deployment = true
-
   network_configuration {
     subnets          = [aws_subnet.pub_subnet_a.id, aws_subnet.pub_subnet_b.id]
-    assign_public_ip = true
+    assign_public_ip     = true
     security_groups = [
       aws_security_group.service_security_group.id,
       aws_security_group.load_balancer_security_group.id
