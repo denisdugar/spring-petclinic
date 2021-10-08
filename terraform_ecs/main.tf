@@ -11,8 +11,110 @@ terraform {
     dynamodb_table = "terraform-up-and-running-locks"
     encrypt        = true
   }
+  required_providers {
+    datadog = {
+      source = "DataDog/datadog"
+    }
+  }
 }
 
+provider "datadog" {
+  api_key = local.datadog_creds.api_key
+  app_key = local.datadog_creds.app_key
+  api_url = local.datadog_creds.api_url
+}
+
+resource "datadog_monitor" "foo" {
+  name               = "Petclinic Monitor"
+  type               = "service check"
+  message            = "Monitor triggered. Notify: @denisdugar@gmail.com"
+  escalation_message = "Escalation message @denisdugar@gmail.com"
+
+  query = "\"http.can_connect\".over(\"instance:petclinic_service\",\"url:http://${aws_alb.application_load_balancer.dns_name}\").by(\"host\",\"instance\",\"url\").last(4).count_by_status()"
+
+  monitor_thresholds {
+    warning           = 2
+    warning_recovery  = 1
+    critical          = 4
+    critical_recovery = 3
+  }
+
+  notify_no_data    = false
+  renotify_interval = 60
+
+  notify_audit = false
+  timeout_h    = 60
+  include_tags = true
+}
+
+data "datadog_monitor" "petclinic_monitor" {
+  name_filter         = "Petclinic Monitor"
+}
+
+resource "datadog_service_level_objective" "foo" {
+  name        = "Petclinic SLO"
+  type        = "monitor"
+  description = "My custom metric SLO"
+  monitor_ids = [data.datadog_monitor.petclinic_monitor.id]
+    thresholds {
+    timeframe       = "90d"
+    target          = 99.9
+    warning         = 99.99
+  }
+}
+
+data "aws_ami" "latest_ubuntu_linux" {
+  owners      = ["099720109477"]
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+}
+
+resource "aws_security_group" "web" {
+  vpc_id = aws_vpc.vpc.id
+  dynamic "ingress" {
+    for_each = ["8125", "5000"]
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+data "template_file" "user_data" {
+  template = "${file("user_data.sh")}"
+  vars = {
+    alb_url = "${aws_alb.application_load_balancer.dns_name}"
+    api_key = "${local.datadog_creds.api_key}"
+  }
+}
+
+resource "aws_launch_configuration" "web" {
+  image_id        = data.aws_ami.latest_ubuntu_linux.id
+  instance_type   = "t2.micro"
+  security_groups = [aws_security_group.web.id]
+  key_name        = "petclinic-key"
+  user_data       = data.template_file.user_data.rendered
+}
+
+resource "aws_autoscaling_group" "web" {
+  launch_configuration = aws_launch_configuration.web.name
+  min_size             = 1
+  max_size             = 1
+  min_elb_capacity     = 1
+  health_check_type    = "EC2"
+  vpc_zone_identifier  = [aws_subnet.pub_subnet_a.id, aws_subnet.pub_subnet_b.id]
+}
 
 resource "aws_alb" "application_load_balancer" {
   name               = "alb"
@@ -196,7 +298,7 @@ resource "aws_cloudwatch_log_group" "log-group" {
   name = "logs"
 }
 
-data "template_file" "user_data" {
+data "template_file" "task_definition" {
   template = "${file("definition.json")}"
   vars = {
     db_url = "${aws_db_instance.petclinic-db.address}"
@@ -208,7 +310,7 @@ data "template_file" "user_data" {
 resource "aws_ecs_task_definition" "aws-ecs-task" {
   family = "task"
 
-  container_definitions = data.template_file.user_data.rendered
+  container_definitions = data.template_file.task_definition.rendered
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   memory                   = "4096"
